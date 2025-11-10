@@ -528,27 +528,58 @@
                 <a href="mailto:contact@artificialbug.com">Contact</a>
             </div>
             <p>
-                © 2024 ArtificialBug. A product by <a href="https://uptechllc.com" class="uptech-link" target="_blank">UptechLLC</a>
+                © 2025 ArtificialBug. A product by <a href="https://uptechllc.com" class="uptech-link" target="_blank">UptechLLC</a>
             </p>
         </div>
     </footer>
 
     <script>
-        function handleSubmit(event) {
+        // CONFIGURATION: Replace with your Azure Function URL
+        const AZURE_FUNCTION_URL = 'https://YOUR-FUNCTION-APP.azurewebsites.net/api/waitlist';
+
+        async function handleSubmit(event) {
             event.preventDefault();
-            const email = document.getElementById('email-input').value;
-            const message = document.getElementById('form-message');
             
-            // Simulate form submission
+            const emailInput = document.getElementById('email-input');
+            const email = emailInput.value;
+            const message = document.getElementById('form-message');
+            const submitButton = event.target.querySelector('button[type="submit"]');
+            
+            // Disable button during submission
+            submitButton.disabled = true;
+            submitButton.textContent = 'Submitting...';
+            
             message.style.display = 'block';
             message.style.color = '#667eea';
-            message.textContent = '🎉 Thank you! You\'re on the waitlist. We\'ll be in touch soon.';
+            message.textContent = 'Processing...';
             
-            // Clear form
-            document.getElementById('email-input').value = '';
-            
-            // In production, you would send this to your backend
-            console.log('Email submitted:', email);
+            try {
+                const response = await fetch(AZURE_FUNCTION_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    message.style.color = '#4ade80';
+                    message.textContent = data.message;
+                    emailInput.value = '';
+                } else {
+                    message.style.color = '#ef4444';
+                    message.textContent = data.message || 'An error occurred. Please try again.';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                message.style.color = '#ef4444';
+                message.textContent = '❌ Connection error. Please try again later.';
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Join Waitlist';
+            }
         }
 
         // Smooth scroll
